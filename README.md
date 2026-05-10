@@ -83,12 +83,9 @@ npm install
 # Запуск dev-сервера
 npm start
 
-# Сборка для production
-npm run build
+# Или
+ng serve
 
-# Запуск тестов
-npm test
-```
 
 Приложение будет доступно по адресу: **http://localhost:4200/**
 
