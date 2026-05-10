@@ -1,0 +1,10 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+main {
+  min-height: calc(100vh - 80px);
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
+}
