@@ -20,15 +20,15 @@ export class NewsService {
   private currentPageSignal = signal(1);
   private customArticlesSignal = signal<Article[]>([]);
   private readonly CUSTOM_ARTICLES_KEY = 'customArticles';
-  private readonly categoryApiMap: Record<NewsCategory, string> = {
-    политика: 'general',
-    экономика: 'business',
-    технологии: 'technology',
-    спорт: 'sports',
-    мир: 'general',
-    общество: 'general',
-    здоровье: 'health',
-    наука: 'science'
+  private readonly categoryKeywordMap: Record<NewsCategory, string> = {
+    политика: 'политика',
+    экономика: 'экономика',
+    технологии: 'технологии',
+    спорт: 'спорт',
+    мир: 'мировые новости',
+    общество: 'общество',
+    здоровье: 'здоровье',
+    наука: 'наука'
   };
 
   articles = computed(() => this.articlesSignal());
@@ -212,54 +212,33 @@ export class NewsService {
     localStorage.setItem(this.CUSTOM_ARTICLES_KEY, JSON.stringify(this.customArticlesSignal()));
   }
 
-  private getApiCategory(category?: NewsCategory): string | undefined {
-    if (!category) {
-      return undefined;
-    }
-
-    return this.categoryApiMap[category];
+  private getCategoryKeyword(category?: NewsCategory): string | undefined {
+    if (!category) return undefined;
+    return this.categoryKeywordMap[category];
   }
 
   private async fetchNews(): Promise<any> {
     const query = this.searchQuerySignal();
     const filters = this.filtersSignal();
-    const apiCategory = this.getApiCategory(filters.category);
+    const categoryKeyword = this.getCategoryKeyword(filters.category);
+
+    // Всегда /everything с language=ru
+    // Категория фильтруется через ключевое слово, т.к. NewsAPI не возвращает ru новости через top-headlines
+    const searchQuery = [categoryKeyword, query].filter(Boolean).join(' ') || 'россия';
 
     let params = new HttpParams()
       .set('apiKey', environment.newsApiKey)
       .set('pageSize', '20')
       .set('page', this.currentPageSignal().toString())
-      .set('language', 'ru');
+      .set('language', 'ru')
+      .set('q', searchQuery);
 
-    if (query && !apiCategory) {
-      params = params.set('q', query);
-      if (filters.sortBy) {
-        params = params.set('sortBy', filters.sortBy);
-      }
-
-      return firstValueFrom(
-        this.http.get<any>(
-          `${environment.newsApiBaseUrl}/everything`,
-          { params }
-        )
-      );
-    }
-
-    if (query) {
-      params = params.set('q', query);
-    }
-
-    params = params.set('country', 'ru');
-
-    if (apiCategory) {
-      params = params.set('category', apiCategory);
+    if (filters.sortBy) {
+      params = params.set('sortBy', filters.sortBy);
     }
 
     return firstValueFrom(
-      this.http.get<any>(
-        `${environment.newsApiBaseUrl}/top-headlines`,
-        { params }
-      )
+      this.http.get<any>(`${environment.newsApiBaseUrl}/everything`, { params })
     );
   }
 

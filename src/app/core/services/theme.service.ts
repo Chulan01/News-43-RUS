@@ -4,13 +4,14 @@ import { Injectable, signal, computed } from '@angular/core';
   providedIn: 'root'
 })
 export class ThemeService {
-  private themeSignal = signal<'light' | 'dark'>(this.getInitialTheme());
+  private readonly THEME_KEY = 'theme';
+  private themeSignal = signal<'light' | 'dark'>('light');
   theme = computed(() => this.themeSignal());
 
-  private readonly THEME_KEY = 'theme';
-
   constructor() {
-    this.applyTheme(this.themeSignal());
+    const theme = this.getInitialTheme();
+    this.themeSignal.set(theme);
+    this.applyTheme(theme);
   }
 
   private getInitialTheme(): 'light' | 'dark' {
@@ -18,10 +19,6 @@ export class ThemeService {
     if (stored === 'dark' || stored === 'light') {
       return stored;
     }
-    return this.getSystemTheme();
-  }
-
-  private getSystemTheme(): 'light' | 'dark' {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
@@ -33,7 +30,6 @@ export class ThemeService {
   }
 
   private applyTheme(theme: 'light' | 'dark'): void {
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
   }
 }
